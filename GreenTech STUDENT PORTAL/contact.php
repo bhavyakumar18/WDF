@@ -1,0 +1,11 @@
+<?php
+require_once 'inc/bootstrap.php'; $errors=[]; $sent=false;
+if($_SERVER['REQUEST_METHOD']==='POST'){ csrf_check(); $name=trim($_POST['name']??'');$email=trim($_POST['email']??'');$message=trim($_POST['message']??'');
+if($name===''||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($message)<5)$errors[]='Please enter your name, a valid email and a message of at least 5 characters.';
+else { $row=['date'=>date('c'),'name'=>$name,'email'=>$email,'message'=>$message]; $path=__DIR__.'/data/submissions.json'; $old=file_exists($path)?json_decode(file_get_contents($path),true):[]; if(!is_array($old))$old=[]; $old[]=$row; file_put_contents($path,json_encode($old,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES),LOCK_EX); $csv=fopen(__DIR__.'/data/submissions.csv','a'); if($csv){if(filesize(__DIR__.'/data/submissions.csv')===0)fputcsv($csv,['date','name','email','message']);fputcsv($csv,array_values($row));fclose($csv);} $sent=true; }
+}
+$pageTitle='Contact'; require 'inc/header.php';
+?>
+<div class="page-heading"><div><div class="eyebrow">WE'RE HERE TO HELP</div><h1>Contact us</h1><p>Send a message to the GreenTech portal team.</p></div></div>
+<div class="contact-layout"><section class="panel"><h2>How can we help?</h2><p class="muted">Your message is saved to local JSON and CSV files for this practical demo.</p><?php if($sent): ?><div class="notice success">Thanks! Your message has been saved.</div><?php endif; ?><?php foreach($errors as $err): ?><div class="notice error"><?= e($err) ?></div><?php endforeach; ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><div class="field"><label for="name">Your name</label><input id="name" name="name" required></div><div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" required></div><div class="field"><label for="message">Message</label><textarea id="message" name="message" rows="5" required minlength="5"></textarea></div><button class="btn primary" type="submit">Send message</button></form></section><aside class="panel"><h2>Quick answers</h2><p>Account access? Visit the <a href="login.php">sign-in page</a>.</p><p>Want to check your subjects? Open <a href="classes.php">Classes</a>.</p><p>For this lab project, messages are stored locally and are not emailed.</p></aside></div>
+<?php require 'inc/footer.php'; ?>
